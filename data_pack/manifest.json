@@ -1,0 +1,147 @@
+{
+  "generated_at": "2026-09-13T07:24:04.923844+00:00",
+  "layout_version": 1,
+  "note": "合并数据包；运行 python scripts/restore_data_pack.py 还原为 data/raw 逐文件布局",
+  "files": [
+    {
+      "path": "klines/part01.parquet",
+      "bytes": 3123901
+    },
+    {
+      "path": "klines/part02.parquet",
+      "bytes": 2820244
+    },
+    {
+      "path": "klines/part03.parquet",
+      "bytes": 3433477
+    },
+    {
+      "path": "klines/part04.parquet",
+      "bytes": 3169274
+    },
+    {
+      "path": "klines/part05.parquet",
+      "bytes": 3054885
+    },
+    {
+      "path": "klines/part06.parquet",
+      "bytes": 3422979
+    },
+    {
+      "path": "klines/part07.parquet",
+      "bytes": 3295951
+    },
+    {
+      "path": "klines/part08.parquet",
+      "bytes": 2439925
+    },
+    {
+      "path": "klines/part09.parquet",
+      "bytes": 3487629
+    },
+    {
+      "path": "klines/part10.parquet",
+      "bytes": 2795849
+    },
+    {
+      "path": "klines/part11.parquet",
+      "bytes": 3171025
+    },
+    {
+      "path": "klines/part12.parquet",
+      "bytes": 3019028
+    },
+    {
+      "path": "klines/part13.parquet",
+      "bytes": 3445752
+    },
+    {
+      "path": "klines/part14.parquet",
+      "bytes": 3069563
+    },
+    {
+      "path": "klines/part15.parquet",
+      "bytes": 2874959
+    },
+    {
+      "path": "klines/part16.parquet",
+      "bytes": 3222837
+    },
+    {
+      "path": "klines/part17.parquet",
+      "bytes": 2559654
+    },
+    {
+      "path": "klines/part18.parquet",
+      "bytes": 3066058
+    },
+    {
+      "path": "klines/part19.parquet",
+      "bytes": 3102355
+    },
+    {
+      "path": "klines/part20.parquet",
+      "bytes": 2724911
+    },
+    {
+      "path": "klines/part21.parquet",
+      "bytes": 3217411
+    },
+    {
+      "path": "klines/part22.parquet",
+      "bytes": 3405931
+    },
+    {
+      "path": "klines/part23.parquet",
+      "bytes": 3001138
+    },
+    {
+      "path": "klines/part24.parquet",
+      "bytes": 3122266
+    },
+    {
+      "path": "klines/part25.parquet",
+      "bytes": 3260858
+    },
+    {
+      "path": "klines/part26.parquet",
+      "bytes": 3009797
+    },
+    {
+      "path": "klines/part27.parquet",
+      "bytes": 3553231
+    },
+    {
+      "path": "klines/part28.parquet",
+      "bytes": 1024657
+    },
+    {
+      "path": "funding/funding.parquet",
+      "bytes": 1066634
+    },
+    {
+      "path": "open_interest/open_interest.parquet",
+      "bytes": 17532925
+    },
+    {
+      "path": "taker/taker.parquet",
+      "bytes": 11312110
+    },
+    {
+      "path": "processed/scans.parquet",
+      "bytes": 1178436
+    },
+    {
+      "path": "processed/case_analysis.parquet",
+      "bytes": 18583
+    },
+    {
+      "path": "processed/universe.parquet",
+      "bytes": 13411
+    },
+    {
+      "path": "processed/unresolved_symbols.csv",
+      "bytes": 24227
+    }
+  ]
+}
