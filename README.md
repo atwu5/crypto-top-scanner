@@ -14,13 +14,17 @@
 
 ### 🌐 在线访问
 
+- **仓库**：https://github.com/atwu5/crypto-top-scanner
 - **网页快照版（GitHub Pages）**：`https://atwu5.github.io/crypto-top-scanner/`
   —— 打开即看最新扫描快照（全市场筛选表 + 单币图表 + 信号解释）。
+  > ⚠️ **首次使用需启用（仅一次，约 10 秒）**：仓库 → Settings → Pages →
+  > Source 选 “Deploy from a branch” → Branch 选 `main`、文件夹选 `/docs` → Save。
+  > 约 1 分钟后即可访问上面地址。
   更新方式：`python scripts/build_online_preview.py` 后提交 `docs/`（或让扫描流程自动带上）。
 - **完整交互版（Streamlit）**，两种方式：
   1. 本机运行：`streamlit run app.py`（最推荐，数据实时增量更新）；
   2. 免费云端部署：到 [share.streamlit.io](https://share.streamlit.io) 用 GitHub 登录 → New app →
-     选仓库 `atwu5/crypto-top-scanner`、主文件 `app.py` → Deploy，即可获得一个可分享的在线地址（首次打开若提示无数据，运行一次 `python scripts/init_data.py` 或等待默认数据更新）。
+     选仓库 `atwu5/crypto-top-scanner`、主文件 `app.py` → Deploy，即可获得一个可分享的在线地址（首次打开若无数据，运行一次 `python scripts/init_data.py` 或等待默认数据更新）。
 
 ### 🚀 换一台电脑怎么跑（快速开始）
 
