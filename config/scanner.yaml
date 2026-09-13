@@ -1,0 +1,237 @@
+# =============================================================
+#  Crypto Top Reversal Scanner — 策略与数据配置
+# -------------------------------------------------------------
+#  所有阈值 / 权重 / 参数都在本文件维护。
+#  Python 代码不硬编码任何策略数字，改参数 = 改本文件。
+#
+#  ⚠️ 说明：当前所有阈值都是 Hypothesis（假设），
+#  需要用 [success] / [false_top] 案例持续验证与回测修正。
+# =============================================================
+
+app:
+  name: "Crypto Top Reversal Scanner"
+  data_timezone: UTC          # 所有落库数据统一为 UTC
+
+# -------------------------------------------------------------
+# 数据源
+#   mode: auto   -> 先探测 fapi（美股环境常见直连），失败自动回退 vision
+#   mode: fapi   -> Binance USDT-M Futures REST (fapi.binance.com)
+#   mode: vision -> Binance 公共数据归档 (data.binance.vision)
+# -------------------------------------------------------------
+data_source:
+  mode: auto
+  fapi_probe_timeout_seconds: 5
+  # 公共归档的数据滞后天数（用于判断「最新可下载日期」，
+  # 例如 2026-09-13 当天，期货归档最新完整日为 09-11 -> lag=2）
+  data_lag_days: 2
+
+api:
+  fapi_base: "https://fapi.binance.com"
+  vision_base: "https://data.binance.vision"
+  # 归档站 S3 列表接口（用于枚举全部合约与文件）
+  vision_s3_base: "https://s3.ap-northeast-1.amazonaws.com/data.binance.vision"
+  coingecko_base: "https://api.coingecko.com/api/v3"
+  timeout_seconds: 25
+  max_retries: 5
+  backoff_base_seconds: 0.8
+  backoff_max_seconds: 20
+  # fapi 权重预算（保守值，实际限额 2400/min）
+  rate_limit_per_minute: 1500
+  # vision 并发（下载归档 zip 的线程数）
+  vision_workers: 24
+  vision_max_requests_per_minute: 2400
+  user_agent: "crypto-top-scanner/0.1"
+
+# -------------------------------------------------------------
+# 扫描范围（Universe）
+# -------------------------------------------------------------
+universe:
+  quote_asset: USDT
+  contract_type: PERPETUAL
+  # 清退 / legacy 合约的排除后缀
+  exclude_suffixes: ["SETTLED", "BUSD", "USDC", "_210129", "_210226"]
+  # >0 时只取前 N 个（调试用）
+  limit_symbols: 0
+  # 数据陈旧超过 N 天的合约跳过（退市 / 无交易）
+  max_staleness_days: 10
+  # 4H K线最少根数（新上币太短则跳过）
+  min_bars_4h: 50
+
+intervals: ["15m", "1h", "4h"]
+
+# -------------------------------------------------------------
+# 初始回补范围（本地缺数据时按此下载；已有数据只做增量）
+# -------------------------------------------------------------
+lookback:
+  klines:
+    "15m": { days: 8 }
+    "1h":  { days: 40 }
+    "4h":  { months: 4 }
+  funding: { months: 4 }
+  # OI / taker 指标类数据
+  metrics: { days: 8 }
+
+# -------------------------------------------------------------
+# 市值排名
+# -------------------------------------------------------------
+rank:
+  target_rank: 100           # 「进入 Top 100」的目标
+  near_target_rank: 150
+  improvement_pct: 0.50      # 排名提升 ≥50% 视为快速提升
+  lookback_hours: 72
+  # 历史排名缺失时：所有排名相关特征记录 NULL，不伪造。
+
+# -------------------------------------------------------------
+# 反抽（rebound）规则 —— 过滤假顶部的关键
+# -------------------------------------------------------------
+rebound:
+  strong_rebound_ratio: 0.70   # >0.70 反抽过强 → 阻止做空
+  failed_rebound_ratio: 0.50   # <0.50 视为反抽失败（利空确认）
+  pump_lookback_hours: 336     # 14 天内寻找「暴涨段」
+  min_leg_move_pct: 0.40       # 暴涨段振幅至少 40% 才评估
+
+# -------------------------------------------------------------
+# 第一层：Overheat Score
+# -------------------------------------------------------------
+overheat:
+  return_24h_watch: 0.60
+  return_24h_extreme: 1.50
+  return_24h_super_extreme: 2.00
+  return_72h_watch: 1.00
+  return_72h_extreme: 2.50
+  volume_ratio_watch: 3
+  volume_ratio_extreme: 5
+  oi_change_24h_watch: 0.30
+  oi_change_24h_extreme: 0.80
+  funding_percentile_watch: 0.90
+  funding_percentile_extreme: 0.98
+  rank_improvement_pct: 0.50
+  rank_target: 100
+  decel_watch: 40
+  decel_extreme: 70
+
+  # 组件权重（缺失组件自动在剩余组件间归一化）
+  weights:
+    return_24h: 0.22
+    return_72h: 0.18
+    volume_ratio: 0.18
+    oi_change: 0.12
+    funding: 0.10
+    rank: 0.10
+    deceleration: 0.10
+
+  score_watch: 50       # ≥50 HOT
+  score_extreme: 70     # ≥70 EXTREME
+
+# -------------------------------------------------------------
+# 上涨速度衰减（momentum deceleration）
+# -------------------------------------------------------------
+momentum:
+  # 每项条件: [短窗口小时, 参考窗口小时, 比值上限]
+  decel_conditions:
+    - [1, 24, 0.0]     # 1h 已转负
+    - [4, 12, 0.50]    # 4h < 12h 的 50%
+    - [12, 24, 0.60]   # 12h < 24h 的 60%
+    - [4, 24, 0.20]    # 4h < 24h 的 20%
+  decel_weights: [0.35, 0.30, 0.25, 0.10]
+
+# -------------------------------------------------------------
+# 成交量
+# -------------------------------------------------------------
+volume:
+  baseline_cycles: 20          # 基准回看周期数
+  spike_peak_days: 7           # 寻找量峰的回看
+  divergence_vol_ratio: 0.60   # 价格新高时量 < 量峰*0.6 → 背离
+
+# -------------------------------------------------------------
+# 第二层：Reversal Score
+# -------------------------------------------------------------
+reversal:
+  weights:
+    macd_negative: 0.08
+    ema20_break: 0.10
+    swing_low_break: 0.16
+    lower_high: 0.16
+    lower_low: 0.12
+    rebound_failed: 0.10
+    rebound_weak: 0.06
+    rebound_volume_decline: 0.06
+    price_down_oi_down: 0.08
+    price_down_oi_up: 0.04
+    second_breakdown: 0.04
+  watch_score: 40
+  short_ready_score: 70
+
+# -------------------------------------------------------------
+# 价格结构（Swing High / Low）
+# -------------------------------------------------------------
+structure:
+  timeframe: "4h"
+  pivot_left: 2
+  pivot_right: 2
+  swing_lookback_bars: 120
+
+# -------------------------------------------------------------
+# Short Blockers —— 出现即不许 SHORT READY
+# -------------------------------------------------------------
+blockers:
+  new_high_lookback_hours: 24      # 该窗口内创近期新高 → 阻止
+  strong_rebound_ratio: 0.70
+  require_swing_break: true        # 未跌破关键 Swing Low → 阻止
+  ema_reclaim_block: true          # 站回 EMA20 且 EMA20 上行 → 阻止
+
+# -------------------------------------------------------------
+# 暴涨背景门控 —— 只关注「近期暴涨后」的币（过滤长期阴跌）
+# -------------------------------------------------------------
+pump_gate:
+  # 最近 N 天内的最大滚动涨幅（4h 计算）达到任一阈值 -> was_extended
+  max_return_24h_14d: 0.30
+  max_return_72h_14d: 0.35
+  lookback_days: 14
+  # 转弱信号（破位 / MACD 转负）需发生在最近 N 天内
+  weakness_recent_days: 14
+
+# -------------------------------------------------------------
+# 状态机
+# -------------------------------------------------------------
+status:
+  top_watch_bars: 12               # MACD 刚刚转负的窗口（4h bar 数）
+  short_trend_after_hours: 24      # SHORT READY 后持续 X 小时仍弱 → SHORT_TREND
+  short_trend_drawdown: 0.25       # 或自高点回撤 ≥25% 也算趋势中
+  first_weakness_decel: 40         # 减速分数 ≥ 该值且 MACD 转负 → FIRST WEAKNESS
+
+# -------------------------------------------------------------
+# 存储
+# -------------------------------------------------------------
+storage:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  duckdb_path: "data/scanner.duckdb"
+  parquet_compression: "zstd"
+  # klines 分区粒度
+  partition: month
+
+# -------------------------------------------------------------
+# CoinGecko 市值
+# -------------------------------------------------------------
+coingecko:
+  vs_currency: usd
+  per_page: 250
+  max_pages: 4
+  # 手动映射补充（symbol -> coin_id），自动匹配失败的在这里补
+  overrides_file: "config/symbol_overrides.csv"
+
+# -------------------------------------------------------------
+# 日志
+# -------------------------------------------------------------
+logging:
+  file: "logs/app.log"
+  level: INFO
+
+# -------------------------------------------------------------
+# GitHub 同步（仅脚本使用；不保存任何 Token）
+# -------------------------------------------------------------
+git_sync:
+  remote: origin
+  branch: main
+  lfs_enabled: true

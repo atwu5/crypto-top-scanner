@@ -1,0 +1,29 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# ---- Env / secrets ----
+.env
+.env.local
+
+# ---- Logs ----
+logs/
+
+# ---- DuckDB database (按建议默认不提交) ----
+data/scanner.duckdb
+data/scanner.duckdb.wal
+data/scanner.duckdb.tmp
+
+# ---- zips 临时文件（解析后即删） ----
+data/raw/**/*.zip
+data/raw/**/*.zip.CHECKSUM
+
+# ---- probe / temp ----
+.probe/
+.openclaw/
+
+# ---- OS ----
+.DS_Store

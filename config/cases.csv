@@ -1,0 +1,9 @@
+symbol,event_date,label
+LSKUSDT,2026-09-12,success
+UAIUSDT,2026-09-09,success
+CYSUSDT,2026-08-12,success
+TUSDT,2026-09-03,success
+AKEUSDT,2026-09-03,success
+DASHUSDT,2026-09-06,success
+BULLAUSDT,2026-09-08,false_top
+ZECUSDT,2026-09-05,false_top
