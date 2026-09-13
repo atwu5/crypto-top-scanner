@@ -26,36 +26,58 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 
+from pathlib import Path
+
 API = "https://api.github.com"
 
 
 def git(*args: str, binary: bool = False):
-    out = subprocess.run(["git", *args], capture_output=True, check=True).stdout
-    return out if binary else out.decode("utf-8")
+    out = subprocess.run(["git", "-c", "core.quotePath=false", *args],
+                         capture_output=True, check=True).stdout
+    return out if binary else out.decode("utf-8").strip()
 
 
 class Gh:
-    def __init__(self, repo: str, token: str, workers: int = 6):
+    def __init__(self, repo: str, token: str, workers: int = 3, state_dir: str = ".probe/push_state"):
         self.repo = repo
         self.workers = workers
+        self.state_path = Path(state_dir) / "blobs.txt"
+        self.state_path.parent.mkdir(parents=True, exist_ok=True)
         self.s = requests.Session()
         self.s.headers.update({
             "Authorization": f"Bearer {token}",
             "Accept": "application/vnd.github+json",
             "User-Agent": "ct-scan-push",
         })
+        self._state_lock = __import__("threading").Lock()
+        self._uploaded = set()
+        if self.state_path.exists():
+            self._uploaded = set(self.state_path.read_text().split())
+            print(f"[push-api] resume: {len(self._uploaded)} blobs already uploaded")
 
-    def call(self, method: str, path: str, body=None, retries: int = 6):
+    def _remember(self, sha: str):
+        with self._state_lock:
+            self._uploaded.add(sha)
+            with open(self.state_path, "a") as f:
+                f.write(sha + "\n")
+
+    def call(self, method: str, path: str, body=None, retries: int = 8):
         last = None
         for i in range(retries):
             try:
-                r = self.s.request(method, f"{API}{path}", json=body, timeout=180)
+                r = self.s.request(method, f"{API}{path}", json=body, timeout=240)
                 if r.status_code >= 300:
-                    if r.status_code in (429, 500, 502, 503, 504):
-                        last = f"{r.status_code}: {r.text[:200]}"
-                        time.sleep(2 * (i + 1))
+                    txt = r.text[:300]
+                    slow = r.status_code in (429, 500, 502, 503, 504) or (
+                        r.status_code == 403 and ("rate limit" in txt.lower())) or (
+                        "timed out" in txt.lower())
+                    if slow:
+                        wait = 60 * (i + 1) if ("rate limit" in txt.lower()) else 2 * (i + 1)
+                        print(f"  ... rate/transient limit ({r.status_code}); sleeping {wait}s")
+                        time.sleep(wait)
+                        last = f"{r.status_code}: {txt}"
                         continue
-                    raise RuntimeError(f"{method} {path} -> {r.status_code}: {r.text[:300]}")
+                    raise RuntimeError(f"{method} {path} -> {r.status_code}: {txt}")
                 return r.json() if r.content else None
             except requests.RequestException as e:
                 last = str(e)
@@ -79,8 +101,11 @@ class Gh:
         return blobs, trees
 
     def upload_blobs(self, entries):
-        """entries: list of (sha, path). Returns actual-number uploaded."""
+        """entries: list of (sha, path). Skips already-uploaded (state file). """
+        todo = [(s, p) for (s, p) in entries if s not in self._uploaded]
+        print(f"[push-api] blobs to upload now: {len(todo)} (already done: {len(entries)-len(todo)})")
         done = 0
+        failed = []
         lock = __import__("threading").Lock()
 
         def one(item):
@@ -91,15 +116,25 @@ class Gh:
                             {"content": base64.b64encode(content).decode(), "encoding": "base64"})
             if res["sha"] != sha:
                 raise RuntimeError(f"blob sha mismatch for {path}: {sha[:8]} vs {res['sha'][:8]}")
+            self._remember(sha)
             with lock:
                 done += 1
-                if done % 50 == 0:
-                    print(f"  uploaded {done}/{len(entries)} blobs")
+                if done % 25 == 0:
+                    print(f"  uploaded {done}/{len(todo)} (this run)")
+            time.sleep(0.35)  # pacing to avoid secondary rate limits
 
         with ThreadPoolExecutor(max_workers=self.workers) as ex:
-            futs = [ex.submit(one, it) for it in entries]
+            futs = {ex.submit(one, it): it for it in todo}
             for f in as_completed(futs):
-                f.result()
+                try:
+                    f.result()
+                except Exception as e:
+                    failed.append((futs[f][1], str(e)[:160]))
+        if failed:
+            print(f"[push-api] ! {len(failed)} blobs failed; re-run to resume")
+            for p, e in failed[:5]:
+                print("   -", p, e)
+            raise RuntimeError("blob upload incomplete")
         return done
 
     def build_tree(self, local_tree_sha: str, remote_trees: set, memo):
@@ -121,12 +156,20 @@ class Gh:
                 entries.append({"path": name, "mode": mode, "type": "commit", "sha": sha})
             else:
                 entries.append({"path": name, "mode": mode, "type": "blob", "sha": sha})
-        res = self.call("POST", f"/repos/{self.repo}/git/trees", {"tree": entries})
+        # 大目录分块创建，再用 base_tree 合并（避免单次请求过大超时）
+        CHUNK = 400
+        if len(entries) <= CHUNK:
+            res = self.call("POST", f"/repos/{self.repo}/git/trees", {"tree": entries})
+        else:
+            res = self.call("POST", f"/repos/{self.repo}/git/trees", {"tree": entries[:CHUNK]})
+            for i in range(CHUNK, len(entries), CHUNK):
+                res = self.call("POST", f"/repos/{self.repo}/git/trees",
+                                {"tree": entries[i:i + CHUNK], "base_tree": res["sha"]})
         memo[local_tree_sha] = res["sha"]
         return res["sha"]
 
     def commit_info(self, sha: str):
-        msg = git("log", "-1", "--format=%B", sha).rstrip("\n")
+        msg = git("log", "-1", "--format=%B", sha)
         name = git("log", "-1", "--format=%an", sha)
         email = git("log", "-1", "--format=%ae", sha)
         date = git("log", "-1", "--format=%aI", sha)
@@ -191,7 +234,7 @@ def main() -> int:
     ap.add_argument("repo")
     ap.add_argument("commits", nargs="+")
     ap.add_argument("--branch", default="main")
-    ap.add_argument("--workers", type=int, default=6)
+    ap.add_argument("--workers", type=int, default=3)
     args = ap.parse_args()
 
     token = os.environ.get("PAT_VALUE") or os.environ.get("GITHUB_PAT") or ""
