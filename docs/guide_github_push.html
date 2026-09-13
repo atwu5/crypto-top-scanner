@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head><meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: 1600px; min-height: 850px; font-family: -apple-system, "Noto Sans SC", "PingFang SC", "WenQuanYi Micro Hei", "Microsoft YaHei", sans-serif; background: #f4f6f9; color: #1f2937; padding: 38px 52px; }
+  .head { display:flex; align-items: center; gap: 16px; }
+  h1 { font-size: 38px; letter-spacing: .5px; }
+  .chip { font-size: 15px; font-weight: 600; padding: 5px 12px; border-radius: 999px; }
+  .sub { font-size: 19px; color: #64748b; margin-top: 10px; }
+  .lane { margin-top: 28px; background: #fff; border-radius: 20px; padding: 24px 28px 26px; box-shadow: 0 6px 18px rgba(15,23,42,.06); border: 1px solid #e5e7eb; }
+  .lane-title { display:flex; align-items:center; gap:12px; font-size: 21px; font-weight: 700; margin-bottom: 22px; }
+  .lane-you .chip { background:#fef3c7; color:#92400e; }
+  .lane-me .chip { background:#ccfbf1; color:#115e59; }
+  .flow { display:flex; align-items: stretch; gap: 10px; }
+  .step { flex:1; border-radius: 14px; padding: 20px 16px 16px; position: relative; border:1.5px solid; }
+  .lane-you .step { background:#fffbeb; border-color:#fcd34d; }
+  .lane-me .step { background:#f0fdfa; border-color:#5eead4; }
+  .num { position:absolute; top:-15px; left:14px; width: 30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:16px; color:#fff; }
+  .lane-you .num { background:#f59e0b; }
+  .lane-me .num { background:#0d9488; }
+  .step h3 { font-size: 20px; margin: 6px 0 8px; }
+  .step p { font-size: 15.5px; line-height: 1.55; color: #475569; }
+  .step b { color:#0f172a; }
+  .arrow { align-self:center; font-size: 26px; color:#94a3b8; font-weight: 700; }
+  .foot { margin-top: 26px; display:flex; gap: 14px; }
+  .note { flex:1; background:#eef2ff; border:1px solid #c7d2fe; color:#3730a3; padding: 14px 18px; border-radius: 14px; font-size: 16.5px; line-height:1.5; }
+  .note.warn { background:#fff7ed; border-color:#fed7aa; color:#9a3412; }
+  .big { font-weight: 800; }
+</style></head>
+<body>
+  <div class="head"><h1>📤 推送到 GitHub · 操作流程</h1><span class="chip" style="background:#e0e7ff;color:#3730a3;">你只需约 3 分钟</span></div>
+  <div class="sub">你给一个 Token（可选：顺手建个空仓库）；推送 + 验证由我自动完成（全部数据 ≈270MB，Git LFS）</div>
+
+  <div class="lane lane-you">
+    <div class="lane-title">🙋 你需要做的 <span class="chip">约 3 分钟</span></div>
+    <div class="flow">
+      <div class="step"><div class="num">1</div><h3>生成 Token</h3><p>GitHub → Settings → Developer settings → Fine-grained token；权限勾 <b>Contents: Read &amp; write</b>（若让我帮你建仓，再加勾 <b>Administration</b>）</p></div>
+      <div class="arrow">➜</div>
+      <div class="step"><div class="num">2</div><h3>（可选）建空仓库</h3><p>New repository → 名称 <b>crypto-top-scanner</b> → 不要勾 README → Create；<br>懒得建就说一声，我来建</p></div>
+      <div class="arrow">➜</div>
+      <div class="step"><div class="num">3</div><h3>发给我</h3><p>把 <b>Token</b>（+ 仓库地址）直接发给我</p></div>
+    </div>
+  </div>
+
+  <div class="lane lane-me">
+    <div class="lane-title">🤖 我自动完成 <span class="chip">约 2–5 分钟</span></div>
+    <div class="flow">
+      <div class="step"><div class="num">1</div><h3>创建 / 确认仓库</h3><p>atwu5/crypto-top-scanner（公开 / 私有随你）</p></div>
+      <div class="arrow">➜</div>
+      <div class="step"><div class="num">2</div><h3>推送</h3><p>2 个 commit：代码 + 全部数据（8,700+ 文件，LFS）</p></div>
+      <div class="arrow">➜</div>
+      <div class="step"><div class="num">3</div><h3>验证并回报</h3><p>校验 commit 与数据完整性，给你仓库链接</p></div>
+      <div class="arrow">➜</div>
+      <div class="step"><div class="num">4</div><h3>你吊销 Token</h3><p>GitHub 同页面点 <b>Revoke</b>，即刻失效</p></div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="note">🔒 Token 仅存内存环境变量、不写入任何文件，只用这一次推送。</div>
+    <div class="note warn">⚠️ 推送完成后，记得把 Token 点 <span class="big">Revoke</span> 吊销。</div>
+  </div>
+</body></html>
