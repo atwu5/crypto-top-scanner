@@ -1,5 +1,5 @@
-# Git LFS —— 大体量数据文件走 LFS（可选，详见 README「GitHub 同步」章节）
-# 启用后：git lfs install && git add .gitattributes
-*.parquet filter=lfs diff=lfs merge=lfs -text
-*.zip filter=lfs diff=lfs merge=lfs -text
-*.duckdb filter=lfs diff=lfs merge=lfs -text
+# 本项目不再使用 Git LFS（受限网络环境无法可靠上传）；数据以 data_pack/ 合并包分发。
+# 如未来想重新启用 LFS，取消下面三行注释即可：
+# *.parquet filter=lfs diff=lfs merge=lfs -text
+# *.zip filter=lfs diff=lfs merge=lfs -text
+# *.duckdb filter=lfs diff=lfs merge=lfs -text

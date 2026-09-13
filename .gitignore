@@ -21,6 +21,11 @@ data/scanner.duckdb.tmp
 data/raw/**/*.zip
 data/raw/**/*.zip.CHECKSUM
 
+# ---- 运行时数据目录不进入 git（数据以 data_pack/ 分发；见 README） ----
+data/raw/
+data/processed/
+data_pack/**/*.tmp
+
 # ---- probe / temp ----
 .probe/
 .openclaw/

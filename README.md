@@ -8,9 +8,40 @@
 
 ### 界面预览
 
-| 扫描总览 | 单币详情（含信号解释与六联图） |
-|---|---|
-| ![dashboard](docs/screenshot_home.png) | ![detail](docs/screenshot_detail_top.png) |
+| 扫描总览 | 单币详情（含信号解释与六联图） | 在线预览版（GitHub Pages） |
+|---|---|---|
+| ![dashboard](docs/screenshot_home.png) | ![detail](docs/screenshot_detail_top.png) | ![online](docs/screenshot_online_home.png) |
+
+### 🌐 在线访问
+
+- **网页快照版（GitHub Pages）**：`https://atwu5.github.io/crypto-top-scanner/`
+  —— 打开即看最新扫描快照（全市场筛选表 + 单币图表 + 信号解释）。
+  更新方式：`python scripts/build_online_preview.py` 后提交 `docs/`（或让扫描流程自动带上）。
+- **完整交互版（Streamlit）**，两种方式：
+  1. 本机运行：`streamlit run app.py`（最推荐，数据实时增量更新）；
+  2. 免费云端部署：到 [share.streamlit.io](https://share.streamlit.io) 用 GitHub 登录 → New app →
+     选仓库 `atwu5/crypto-top-scanner`、主文件 `app.py` → Deploy，即可获得一个可分享的在线地址（首次打开若提示无数据，运行一次 `python scripts/init_data.py` 或等待默认数据更新）。
+
+### 🚀 换一台电脑怎么跑（快速开始）
+
+```bash
+# 0) 装好 Python 3.10+
+git clone https://github.com/atwu5/crypto-top-scanner.git
+cd crypto-top-scanner
+# 1) 安装依赖
+pip install -r requirements.txt
+# 2) 数据：仓库内置合并数据包（data_pack/），还原成运行时布局：
+python scripts/restore_data_pack.py
+#    （也可以跳过这步，直接 `python scripts/init_data.py` 从 Binance 重新拉）
+# 3) 直接扫描（增量，只补最新数据）
+python main.py scan
+# 4) 打开网页
+streamlit run app.py
+```
+
+- 数据包为普通文件（**无需 Git LFS**），clone 即含全市场历史数据；
+- 想要一直用最新行情：`python scripts/update_data.py` 增量更新；更新后可 `python scripts/pack_data.py` 重新打包并提交（见第 11 节）；
+- 依赖版本参考：`requirements-lock.txt`（本机验证过的完整环境快照）。
 
 ---
 
@@ -119,6 +150,8 @@ streamlit run app.py
 
 ## 8. 数据保存在哪里
 
+本地运行布局：
+
 ```text
 data/
 ├── raw/
@@ -135,6 +168,8 @@ data/
 │   └── scans/scan_*.parquet     # 每次扫描完整结果
 └── scanner.duckdb               # DuckDB 查询层（视图 + scan_results / case_analysis 表）
 ```
+
+仓库分发格式：**`data_pack/`**（合并数据包，约 110MB / 35 个文件）——克隆后运行 `python scripts/restore_data_pack.py` 即可还原成上面的 `data/raw` 布局；`data_pack/` 由 `python scripts/pack_data.py` 生成。
 
 查询示例（DuckDB 已建好 `klines_15m / klines_1h / klines_4h / funding / open_interest / market_cap / scan_results` 视图）：
 
@@ -184,17 +219,26 @@ python scripts/analyze_cases.py
 
 ## 11. 如何同步 GitHub
 
-代码和配置正常提交；大体量数据通过 **Git LFS**（`.gitattributes` 已配置 `*.parquet` 走 LFS）。
+代码、配置与数据包（`data_pack/`）正常 Git 管理（**无 Git LFS 依赖**）。
+
+日常同步（自己的网络环境直推即可）：
 
 ```bash
-scripts/git_sync.sh                 # 提交全部（含数据，走 LFS）并推送
-scripts/git_sync.sh --code-only     # 只提交代码/配置/结果（不含 data/raw 原始数据）
+python scripts/pack_data.py         # 数据有更新时：重新生成合并数据包
+scripts/git_sync.sh                 # 提交并推送（代码 + data_pack）
+scripts/git_sync.sh --code-only     # 只提交代码/配置（不含数据包）
 ```
 
 - 脚本 **不会存储任何 Token**，认证走本机 git 凭据（credential helper）；
-- 首次使用需先关联远程仓库：`git remote add origin <你的仓库地址>`，并确保已 `git lfs install`；
-- DuckDB 数据库默认不提交（`.gitignore` 已排除）；
-- 如果数据体积太大，先推代码 + `data/processed` 结果，原始 parquet 分批再推。
+- 首次使用需先关联远程仓库：`git remote add origin <你的仓库地址>`；
+- `data/raw`、`data/processed`、`scanner.duckdb` 默认不入 git（数据以 `data_pack/` 分发）；
+- 恢复数据布局：`python scripts/restore_data_pack.py`。
+
+> 受限网络提示：若本机 `git push` 被网关阻断（大流量上传被截断等），可改用自带的 REST API 通道（自动只上传新增对象，支持断点）：
+>
+> ```bash
+> PAT_VALUE=<你的token> python scripts/push_via_api.py <owner/repo> <commit1> [commit2 ...]
+> ```
 
 > 沙箱 / 无直连环境提示：若 `git push` 被网络网关阻断，可用自带的
 > `scripts/push_via_api.py` 把本地 commit 通过 GitHub REST API 上传
@@ -225,7 +269,8 @@ crypto-top-scanner/
 │   ├── scanner.yaml       # 唯一策略配置文件
 │   ├── cases.csv          # 人工案例样本
 │   └── symbol_overrides.csv
-├── data/                  # 本地数据（见上文）
+├── data/                  # 本地运行数据（见上文；data/raw 与 processed 不入 git）
+├── data_pack/             # ★ 仓库分发的合并数据包（clone 后 restore_data_pack.py 还原）
 ├── src/
 │   ├── binance_client.py  # Binance 数据访问（fapi + 公共归档，统一封装）
 │   ├── marketcap_client.py# CoinGecko 市值排名 + 映射
@@ -242,6 +287,11 @@ crypto-top-scanner/
     ├── init_data.py       # 初始化数据
     ├── update_data.py     # 增量更新
     ├── analyze_cases.py   # 样本分析
+    ├── update_outcomes.py # 扫描结果的未来走势回填（§29）
+    ├── pack_data.py       # 生成 data_pack/ 合并数据包
+    ├── restore_data_pack.py # 还原 data_pack -> data/raw 布局
+    ├── build_online_preview.py # 生成 GitHub Pages 在线预览数据
+    ├── push_via_api.py    # 受限网络下的 REST API 推送（断点式）
     └── git_sync.sh        # GitHub 同步
 ```
 

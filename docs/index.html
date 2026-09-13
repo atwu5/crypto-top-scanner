@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crypto Top Reversal Scanner · 在线预览</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%AD%3C/text%3E%3C/svg%3E">
+<script src="plotly.min.js" charset="utf-8"></script>
+<style>
+  :root{
+    --bg:#f4f6f9; --card:#ffffff; --ink:#1f2937; --muted:#64748b; --line:#e5e7eb;
+    --red:#dc2626; --orange:#ea580c; --amber:#d97706; --purple:#7c3aed; --blue:#2563eb; --slate:#64748b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,"Segoe UI","PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);padding:22px 26px 60px}
+  a{color:var(--blue);text-decoration:none}
+  .head{display:flex;flex-wrap:wrap;align-items:baseline;gap:14px}
+  h1{font-size:26px}
+  .meta{color:var(--muted);font-size:13.5px;margin-top:8px;line-height:1.7}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 6px}
+  .chip{font-size:13px;font-weight:600;border-radius:999px;padding:5px 12px;border:1px solid transparent}
+  .chip b{font-size:14.5px}
+  .filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:14px 0}
+  .filters input[type=text]{width:170px}
+  input,select{border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13.5px;background:#fff;color:var(--ink);outline:none}
+  input:focus,select:focus{border-color:#94a3b8}
+  .filters label{font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+  .filters input[type=number]{width:96px}
+  .count{font-size:13px;color:var(--muted);margin-left:auto}
+  .tablewrap{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:auto;max-height:64vh}
+  table{border-collapse:collapse;width:100%;font-size:13px;white-space:nowrap}
+  thead th{position:sticky;top:0;background:#f8fafc;border-bottom:1px solid var(--line);padding:9px 10px;text-align:right;font-weight:600;color:#334155;cursor:pointer;z-index:2}
+  thead th.l{text-align:left}
+  tbody td{border-bottom:1px solid #f1f5f9;padding:7px 10px;text-align:right;font-variant-numeric:tabular-nums}
+  tbody td.l{text-align:left}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:#f0f9ff}
+  .sym{font-weight:700}
+  .pos{color:#059669}.neg{color:#dc2626}.dim{color:#94a3b8}
+  .st{display:inline-block;font-size:11.5px;font-weight:700;color:#fff;border-radius:6px;padding:3px 8px;white-space:nowrap}
+  .note{margin:14px 0 0;color:var(--muted);font-size:12.5px;line-height:1.8}
+  /* detail */
+  .overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;z-index:50;overflow:auto;padding:26px 4vw 60px}
+  .overlay.open{display:block}
+  .panel{max-width:1140px;margin:0 auto;background:var(--card);border-radius:16px;padding:22px 26px 30px;box-shadow:0 20px 50px rgba(15,23,42,.25)}
+  .phead{display:flex;flex-wrap:wrap;align-items:center;gap:14px}
+  .phead h2{font-size:24px}
+  .pill{font-size:13px;background:#f1f5f9;border-radius:999px;padding:5px 12px;font-weight:600}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 14px;font-size:13.5px;cursor:pointer}
+  .btn:hover{background:#f8fafc}
+  .kpis{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 6px}
+  .kpi{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:8px 12px;min-width:112px}
+  .kpi .k{font-size:11.5px;color:var(--muted)}
+  .kpi .v{font-size:16px;font-weight:700;margin-top:2px}
+  .reasons{margin:10px 0 4px;font-size:13px;color:#334155}
+  .reasons ul{margin:6px 0 0 18px}
+  .blockbox{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:10px 14px;font-size:13px;margin-top:10px}
+  .okbox{background:#f0fdf4;border:1px solid #bbf7d0;color:#15803d;border-radius:10px;padding:10px 14px;font-size:13px;margin-top:10px}
+  .col2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .col2 h4{font-size:13px;margin:8px 0 4px;color:#334155}
+  .col2 li{font-size:12.5px;margin:3px 0 0 16px;color:#475569}
+  .chartbox{margin-top:12px}
+  .loading{color:var(--muted);font-size:13px;padding:30px 0;text-align:center}
+  .foot{margin-top:26px;color:#94a3b8;font-size:12px;text-align:center;line-height:1.9}
+  @media(max-width:820px){.col2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="head">
+    <h1>🔭 Crypto Top Reversal Scanner</h1>
+    <span class="meta" id="meta" style="margin-top:0"></span>
+  </div>
+  <div class="meta" id="meta2">加载中…</div>
+  <div class="meta" id="ranknote" style="color:#b45309"></div>
+
+  <div class="chips" id="counts"></div>
+
+  <div class="filters">
+    <label>搜索币种<input type="text" id="q" placeholder="如 BULLA / DOT"></label>
+    <label>状态<select id="st"><option value="">全部信号状态</option></select></label>
+    <label>24H% ≥<input type="number" id="min24" value="" placeholder="如 50"></label>
+    <label>Overheat ≥<input type="number" id="minoh" value="" placeholder="如 50"></label>
+    <label>Reversal ≥<input type="number" id="minrv" value="" placeholder="如 40"></label>
+    <label style="flex-direction:row;align-items:center;gap:6px;margin-top:16px"><input type="checkbox" id="hideNorm" checked> 只看信号状态</label>
+    <div class="count" id="count"></div>
+  </div>
+
+  <div class="tablewrap">
+    <table id="tbl">
+      <thead><tr id="thead"></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    📌 这是<strong>网页快照版</strong>（数据为最近一次扫描结果，点击任意一行可看单币详情与图表）。完整交互版（实时跑数 + 全部功能）在本地运行：<code>streamlit run app.py</code>。<br>
+    ⚠️ 所有阈值目前均为 Hypothesis（假设），需持续用案例验证；本工具不构成投资建议，且<strong>不做任何下单</strong>。
+  </div>
+
+  <!-- detail overlay -->
+  <div class="overlay" id="ov">
+    <div class="panel">
+      <div class="phead">
+        <button class="btn" id="back">← 返回列表</button>
+        <h2 id="dsym">—</h2>
+        <span id="dstatus" class="pill">—</span>
+        <span class="pill">Overheat <b id="doh">-</b></span>
+        <span class="pill">Reversal <b id="drv">-</b></span>
+        <span style="margin-left:auto"></span>
+        <a class="btn" id="dghlink" href="https://github.com/atwu5/crypto-top-scanner" target="_blank" rel="noopener">GitHub 仓库 ↗</a>
+      </div>
+      <div id="dreason" class="reasons"></div>
+      <div id="dblock"></div>
+      <div class="col2" id="dcol2" style="margin-top:8px;display:none">
+        <div><h4>已满足信号 ✓</h4><ul id="dreached"></ul></div>
+        <div><h4>尚未满足 / 阻止项 ✗</h4><ul id="dmissing"></ul></div>
+      </div>
+      <div id="dcharts" class="chartbox"><div class="loading">载入图表数据…</div></div>
+      <div class="foot">图表为 4H K线（近 150 根）+ 事件标记；OI / Funding 为本地累计数据。数据均 UTC。</div>
+    </div>
+  </div>
+
+<script>
+const STATUSES = ["SHORT_TREND","SHORT_READY","REVERSAL_CONFIRMING","TOP_WATCH","FIRST_WEAKNESS","EXTREME","HOT","INVALIDATED","NORMAL"];
+const ST_COLOR = {SHORT_READY:"#dc2626",SHORT_TREND:"#991b1b",REVERSAL_CONFIRMING:"#ea580c",TOP_WATCH:"#d97706",FIRST_WEAKNESS:"#eab308",EXTREME:"#7c3aed",HOT:"#2563eb",INVALIDATED:"#94a3b8",NORMAL:"#cbd5e1"};
+const ST_LABEL = {SHORT_READY:"SHORT READY",SHORT_TREND:"SHORT TREND",REVERSAL_CONFIRMING:"REVERSAL CONFIRMING",TOP_WATCH:"TOP WATCH",FIRST_WEAKNESS:"FIRST WEAKNESS",EXTREME:"EXTREME",HOT:"HOT",INVALIDATED:"INVALIDATED",NORMAL:"NORMAL"};
+const CAND = new Set(["SHORT_READY","SHORT_TREND","REVERSAL_CONFIRMING"]);
+
+let DATA=null, VIEW=[], sortKey="__order", sortDir=1;
+const $=id=>document.getElementById(id);
+const pct=v=>v==null?"<span class=dim>-</span>":`<span class="${v>0?'pos':v<0?'neg':'dim'}">${(v*100).toFixed(1)}%</span>`;
+const num=v=>v==null?"<span class=dim>-</span>":v;
+function price(v){ if(v==null) return "<span class=dim>-</span>"; if(v>=1000) return v.toLocaleString('en-US',{maximumFractionDigits:0}); if(v>=1) return v.toFixed(3); if(v>=0.01) return v.toFixed(5); return v.toPrecision(6); }
+const fmtDate=t=>t?new Date(t).toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false}):'-';
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function boot(){
+  try{
+    const r = await fetch("preview/scan.json",{cache:"no-cache"});
+    DATA = await r.json();
+  }catch(e){ $("tbody").innerHTML=`<tr><td colspan="16" style="text-align:center;padding:30px">数据加载失败：${e}</td></tr>`; return; }
+  const c = DATA.counts||{};
+  $("meta2").innerHTML = `扫描时间 <b>${esc(DATA.scan_time)}</b> · 数据截至 <b>${esc(DATA.data_through||'-')}</b>（UTC） · 共 <b>${DATA.total}</b> 个合约 · <span class="dim">在线快照版</span>`;
+  if(DATA.rank_available===false){
+    document.getElementById("ranknote").textContent = "市值排名暂无数据 —— 本环境无法访问 CoinGecko；快照会随持续运行自动积累（不会用当前值冒充历史）。";
+  }
+  const order = ["SHORT_READY","SHORT_TREND","REVERSAL_CONFIRMING","TOP_WATCH","FIRST_WEAKNESS","EXTREME","HOT"];
+  $("counts").innerHTML = order.map(s=>`<span class="chip" style="background:${ST_COLOR[s]}1a;color:${ST_COLOR[s]};border-color:${ST_COLOR[s]}55">${ST_LABEL[s]} <b>${c[s]||0}</b></span>`).join("")
+    + `<span class="chip" style="background:#eef2ff;color:#3730a3">NORMAL <b>${c.NORMAL||0}</b></span>`;
+  const sel = $("st"); for(const s of STATUSES){ const o=document.createElement("option"); o.value=s; o.textContent=ST_LABEL[s]; sel.appendChild(o); }
+  // header
+  const cols=[["symbol","币种","l"],["price","价格",""],["r1h","1H%",""],["r4h","4H%",""],["r24h","24H%",""],["r72h","72H%",""],["volr","成交量×",""],["rank","排名",""],["rankchg","72H排名Δ",""],["oi24","OI 24H%",""],["fund","Funding",""],["macd","MACD",""],["struct","结构",""],["reb","反抽%",""],["oh","Overheat",""],["rv","Reversal",""],["status","状态","l"]];
+  $("thead").innerHTML = cols.map(([k,t,cls])=>`<th class="${cls}" data-k="${k}">${t}</th>`).join("");
+  document.querySelectorAll("#thead th").forEach(th=>th.onclick=()=>{
+    const k=th.dataset.k; if(sortKey===k) sortDir=-sortDir; else{sortKey=k;sortDir=(k==="symbol"||k==="struct"||k==="status")?1:-1;}
+    apply();
+  });
+  ["q","st","min24","minoh","minrv","hideNorm"].forEach(id=>{ $(id).addEventListener("input",apply); $(id).addEventListener("change",apply); });
+  apply();
+  $("back").onclick=closeDetail;
+  $("ov").addEventListener("click",e=>{ if(e.target===$("ov")) closeDetail(); });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeDetail(); });
+}
+
+function apply(){
+  const q=$("q").value.trim().toUpperCase(), st=$("st").value,
+        m24=parseFloat($("min24").value), moh=parseFloat($("minoh").value), mrv=parseFloat($("minrv").value),
+        hide=$("hideNorm").checked;
+  VIEW = DATA.rows.filter(r=>{
+    if(q && !r.symbol.includes(q)) return false;
+    if(st && r.status!==st) return false;
+    if(!st && hide && !CAND.has(r.status) && !["TOP_WATCH","FIRST_WEAKNESS","EXTREME","HOT"].includes(r.status)) return false;
+    if(!isNaN(m24) && (r.r24h==null || r.r24h*100 < m24)) return false;
+    if(!isNaN(moh) && (r.oh==null || r.oh < moh)) return false;
+    if(!isNaN(mrv) && (r.rv==null || r.rv < mrv)) return false;
+    return true;
+  });
+  VIEW.sort((a,b)=>{
+    if(sortKey==="__order"){ const oa=STATUSES.indexOf(a.status), ob=STATUSES.indexOf(b.status);
+      if(oa!==ob) return oa-ob; return (b.rv??-1)-(a.rv??-1); }
+    let va=a[sortKey], vb=b[sortKey];
+    if(sortKey==="status"){va=STATUSES.indexOf(va);vb=STATUSES.indexOf(vb);}
+    if(va==null&&vb==null)return 0; if(va==null)return 1; if(vb==null)return -1;
+    if(typeof va==="string") return sortDir*va.localeCompare(vb);
+    return sortDir*(va-vb);
+  });
+  $("count").textContent=`显示 ${VIEW.length} / ${DATA.total}`;
+  $("tbody").innerHTML = VIEW.map(r=>{
+    const st=`<span class="st" style="background:${ST_COLOR[r.status]}">${ST_LABEL[r.status]}</span>`;
+    return `<tr data-s="${esc(r.symbol)}">
+      <td class="l sym">${esc(r.symbol)}${r.chart?"":"<span class=dim> ·</span>"}</td>
+      <td>${price(r.price)}</td><td>${pct(r.r1h)}</td><td>${pct(r.r4h)}</td><td>${pct(r.r24h)}</td><td>${pct(r.r72h)}</td>
+      <td>${r.volr==null?"<span class=dim>-</span>":r.volr.toFixed(2)+"x"}</td>
+      <td>${num(r.rank)}</td><td>${r.rankchg==null?"<span class=dim>-</span>":(r.rankchg>0?"+"+r.rankchg:r.rankchg)}</td>
+      <td>${pct(r.oi24)}</td><td>${r.fund==null?"<span class=dim>-</span>":(r.fund*100).toFixed(4)+"%"}</td>
+      <td>${r.macd_neg?"负":"正"}</td><td>${esc(r.struct)}</td>
+      <td>${r.reb==null?"<span class=dim>-</span>":(r.reb*100).toFixed(1)}</td>
+      <td>${r.oh??"-"}</td><td>${r.rv??"-"}</td><td class="l">${st}</td></tr>`;
+  }).join("");
+  document.querySelectorAll("#tbody tr").forEach(tr=>tr.onclick=()=>openDetail(tr.dataset.s));
+}
+
+async function openDetail(sym){
+  $("ov").classList.add("open"); document.body.style.overflow="hidden";
+  $("dsym").textContent=sym;
+  $("dstatus").textContent="…"; $("doh").textContent="-"; $("drv").textContent="-";
+  $("dreason").innerHTML=""; $("dblock").innerHTML=""; $("dcol2").style.display="none";
+  $("dreached").innerHTML=""; $("dmissing").innerHTML="";
+  $("dcharts").innerHTML='<div class="loading">载入图表数据…</div>';
+  const row = DATA.rows.find(r=>r.symbol===sym);
+  if(row){ $("dstatus").textContent=ST_LABEL[row.status]; $("dstatus").style.background=ST_COLOR[row.status]; $("dstatus").style.color="#fff";
+    $("doh").textContent=row.oh??"-"; $("drv").textContent=row.rv??"-"; }
+  try{
+    const r=await fetch(`preview/charts/${encodeURIComponent(sym)}.json`,{cache:"no-cache"});
+    if(!r.ok) throw new Error(r.status);
+    const d=await r.json(); renderDetail(d);
+  }catch(e){
+    $("dcharts").innerHTML='<div class="loading">该币未生成图表数据（完整图表请在本地运行 streamlit 版查看）。</div>';
+    if(row?.brief?.length) $("dreason").innerHTML = `<b>状态原因：</b> ${esc(row.brief[0])}`;
+  }
+}
+
+function renderDetail(d){
+  const m=d.meta||{};
+  if(m.reasons?.length) $("dreason").innerHTML = `<b>状态原因：</b><ul>${m.reasons.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
+  if(m.blocks?.length) $("dblock").innerHTML = `<div class="blockbox">🚫 BLOCK SHORT<br>${m.blocks.map(x=>"• "+esc(x)).join("<br>")}</div>`;
+  else if(m.reached?.length) $("dblock").innerHTML = `<div class="okbox">✓ 已满足关键条件，进入人工复核流程。</div>`;
+  const rc=m.reached||[], ms=m.missing||[];
+  if(rc.length||ms.length){ $("dcol2").style.display="grid";
+    $("dreached").innerHTML=rc.map(x=>`<li>✓ ${esc(x)}</li>`).join("")||"<li class=dim>（暂无）</li>";
+    $("dmissing").innerHTML=ms.map(x=>`<li>✗ ${esc(x)}</li>`).join("")||"<li class=dim>（无）</li>"; }
+  const box=$("dcharts"); box.innerHTML="";
+  const T=d.bars.t.map(s=>new Date(s*1000));
+  const mk=(h,traces,extra)=>{ const el=document.createElement("div"); el.style.height=h+"px"; box.appendChild(el);
+    Plotly.newPlot(el,traces,Object.assign({margin:{l:46,r:16,t:26,b:26},paper_bgcolor:"rgba(0,0,0,0)",plot_bgcolor:"rgba(0,0,0,0)",showlegend:false,font:{size:11,color:"#475569"}},extra||{}),{displayModeBar:false,responsive:true}); return el; };
+
+  // 1) candles + ema + markers
+  const tr=[{type:"candlestick",x:T,open:d.bars.o,high:d.bars.h,low:d.bars.l,close:d.bars.c,
+    increasing:{line:{color:"#26a69a"}},decreasing:{line:{color:"#ef5350"}},name:"K"}];
+  tr.push({x:T,y:d.ema20,mode:"lines",line:{color:"#f59e0b",width:1.2},name:"EMA20"});
+  tr.push({x:T,y:d.ema60,mode:"lines",line:{color:"#6366f1",width:1.2},name:"EMA60"});
+  const sh=(d.swings||[]).filter(s=>s.k==="H"), sl=(d.swings||[]).filter(s=>s.k==="L");
+  if(sh.length) tr.push({x:sh.map(s=>new Date(s.t*1000)),y:sh.map(s=>s.p),mode:"markers",marker:{symbol:"triangle-down",size:8,color:"#dc2626"},name:"Swing H"});
+  if(sl.length) tr.push({x:sl.map(s=>new Date(s.t*1000)),y:sl.map(s=>s.p),mode:"markers",marker:{symbol:"triangle-up",size:8,color:"#16a34a"},name:"Swing L"});
+  const EV_COLOR={"FIRST WEAKNESS":"#d97706","LOWER HIGH":"#ea580c","BREAKDOWN":"#dc2626","SHORT READY":"#7f1d1d","REBOUND HIGH":"#7c3aed","PUMP HIGH":"#16a34a"};
+  const EV_POS=["top center","bottom center","top left","bottom right","top right","bottom left"];
+  (d.events||[]).forEach((ev,ei)=>{
+    let bi=0,bd=1e18; for(let i=0;i<d.bars.t.length;i++){const dd=Math.abs(d.bars.t[i]-ev.t); if(dd<bd){bd=dd;bi=i;}}
+    const yy=d.bars.h[bi]*1.012, col=EV_COLOR[ev.label]||"#64748b";
+    const pos=EV_POS[ei%EV_POS.length];
+    const y2=pos.startsWith("bottom")?d.bars.l[bi]*0.988:yy;
+    tr.push({x:[new Date(ev.t*1000)],y:[y2],mode:"markers+text",text:[ev.label],textposition:pos,
+      textfont:{size:10,color:col},marker:{symbol:"x",size:9,color:col},hovertemplate:esc(ev.label)+"<extra></extra>"});
+  });
+  mk(400,tr,{xaxis:{rangeslider:{visible:false}},hovermode:"x unified",yaxis:{title:""},title:{text:"K线 + EMA + 结构/事件标记",font:{size:12},x:0.01}});
+
+  // 2) volume
+  const vc=d.bars.c.map((c,i)=>c>=d.bars.o[i]?"#26a69a80":"#ef535080");
+  mk(110,[{type:"bar",x:T,y:d.bars.v,marker:{color:vc}}],{title:{text:"Volume (Quote)",font:{size:12},x:0.01},yaxis:{tickformat:"~s"}});
+
+  // 3) macd
+  const hc=d.hist.map(v=>v>=0?"#26a69a":"#ef5350");
+  mk(140,[{type:"bar",x:T,y:d.hist,marker:{color:hc}},
+          {x:T,y:d.macd,mode:"lines",line:{color:"#2563eb",width:1.1}},
+          {x:T,y:d.signal,mode:"lines",line:{color:"#f59e0b",width:1.1}}],
+     {title:{text:"MACD (4H)",font:{size:12},x:0.01}});
+
+  // 4) OI
+  if(d.oi&&d.oi.t.length){
+    mk(140,[{x:d.oi.t.map(s=>new Date(s*1000)),y:d.oi.v,mode:"lines",line:{color:"#7c3aed",width:1.3},fill:"tozeroy",fillcolor:"#7c3aed18"}],
+       {title:{text:"Open Interest (USD)",font:{size:12},x:0.01},yaxis:{tickformat:"~s"}});
+  }else{
+    box.insertAdjacentHTML("beforeend",'<div class="loading">OI 数据不可用</div>');
+  }
+  // 5) funding
+  if(d.funding&&d.funding.t.length){
+    mk(120,[{x:d.funding.t.map(s=>new Date(s*1000)),y:d.funding.v.map(v=>v*100),mode:"lines",line:{color:"#0d9488",width:1.3,shape:"hv"}}],
+       {title:{text:"Funding (%)",font:{size:12},x:0.01}});
+  }else{
+    box.insertAdjacentHTML("beforeend",'<div class="loading">Funding 数据不可用</div>');
+  }
+}
+
+function closeDetail(){ $("ov").classList.remove("open"); document.body.style.overflow=""; }
+
+boot();
+</script>
+</body>
+</html>

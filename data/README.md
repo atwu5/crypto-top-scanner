@@ -1,6 +1,11 @@
 # data/ 目录说明
 
-本目录是工具运行积累的本地数据（默认 `git` 提交时：原始 parquet 走 LFS）。
+本目录是工具运行积累的本地数据。
+
+- 日常运行布局：`data/raw/*`、`data/processed/*`（不入 git）；
+- 仓库分发格式：合并数据包 `data_pack/`（见仓库根目录），克隆后运行
+  `python scripts/restore_data_pack.py` 即可还原为下面的布局；
+- 由 `python scripts/pack_data.py` 生成数据包。
 
 ## 目录结构
 
